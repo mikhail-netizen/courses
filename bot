@@ -1,0 +1,60 @@
+import telebot
+import time
+TOKEN = '8375370430:AAHWAaNNsHwBB6jyOahfAaN35x1_ebnDrOI'
+
+bot = telebot.TeleBot(TOKEN)
+bal = 1000
+history_trans = []
+choose = ("проверить баланс", "снять деньги", "пополнить счет", "история операций")
+
+
+
+kb = telebot.types.ReplyKeyboardMarkup(True)
+kb.add(*choose)
+
+@bot.message_handler(commands=['start']) # /start
+def start(message):
+    bot.send_message(message.chat.id, "Привет. выбери что ты хочешь сделать", reply_markup=kb)
+
+@bot.message_handler(func=lambda message: message.text == "проверить баланс")
+def balance(message):
+        bot.send_message(message.chat.id, bal)
+@bot.message_handler(func=lambda message: message.text == "снять деньги")
+def minus(message):
+    bot.send_message(message.chat.id, "введите сумму")
+    bot.register_next_step_handler(message, step)
+def step(message):
+    b = int(message.text)
+    if b <= 0:
+        bot.send_message(message.chat.id, "сумма не может быть отрицательной")
+    global bal
+    if b <=bal :
+        bot.send_message(message.chat.id, "операция прошла успешно!")
+        bal -= b
+    history_trans.append(f"Снятие {b}$")
+    if b > bal :
+        bot.send_message(message.chat.id, "недостаточно средств")
+
+@bot.message_handler(func=lambda message: message.text == "пополнить счет")
+def plus(message):
+    bot.send_message(message.chat.id, "введите сумму")
+    bot.register_next_step_handler(message, step1)
+def step1(message):
+        y = int(message.text)
+        if y <= 0:
+            bot.send_message(message.chat.id, "сумма не может быть отрицательной")
+        bot.send_message(message.chat.id, "операция прошла успешно!")
+        global bal
+        bal += y
+        history_trans.append(f"пополнение {y}$")
+
+@bot.message_handler(func=lambda message: message.text == "история операций")
+def history(message):
+
+    for trans in history_trans:
+        bot.send_message(message.chat.id, trans)
+        bot.send_message(message.chat.id, time.ctime())
+
+
+bot.polling()
+
